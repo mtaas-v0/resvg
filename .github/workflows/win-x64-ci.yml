@@ -36,15 +36,20 @@ jobs:
   
     # Unlike other binaries, viewsvg isn't built with crt-static
     - name: Build C API
-      working-directory: crates/c-api
-      run: cargo build --release
+      run: cargo build --release --bins
+      
+    - name: List files
+      shell: bash
+      run: ls . && find target
+
       
     - name: Prepare Artifact Workspace
+      if: false
       shell: bash
       run: |
         # Create a clean folder to package the artifact
         mkdir -p dist/
-        cp target/release/*.exe dist/
+        cp target/release/* dist/
 
     - name: Generate Datestamp
       id: date
@@ -58,6 +63,6 @@ jobs:
       with:
         # Formats output as: resvg-windows-20260909-b42
         name: resvg-windows-${{ steps.date.outputs.stamp }}-b${{ github.run_number }}
-        path: dist
+        path: target
         if-no-files-found: error
         retention-days: 14
