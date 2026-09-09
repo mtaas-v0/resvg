@@ -28,10 +28,17 @@ jobs:
       with:
         key: "resvg-windows"
 
-    - name: Build resvg-cli binary
-      run: |
-        cargo build --release --bin resvg-cli
-
+    - name: Build thumbnailer
+      working-directory: tools/explorer-thumbnailer
+      env:
+        RUSTFLAGS: -Ctarget-feature=+crt-static # make sure it's static
+      run: cargo build
+  
+    # Unlike other binaries, viewsvg isn't built with crt-static
+    - name: Build C API
+      working-directory: crates/c-api
+      run: cargo build --release
+      
     - name: Prepare Artifact Workspace
       shell: bash
       run: |
