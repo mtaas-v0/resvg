@@ -1,0 +1,56 @@
+name: Build and Upload resvg-cli (Windows)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: # Allows manual trigger from the Actions tab
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout resvg source code
+      uses: actions/checkout@v4
+      with:
+        repository: 'linebender/resvg' # Dynamically clones the official resvg repo
+
+    - name: Install Rust Toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+        targets: x86_64-pc-windows-msvc
+
+    - name: Rust Cache
+      uses: swatinem/rust-cache@v2
+      with:
+        key: "resvg-windows"
+
+    - name: Build resvg-cli binary
+      run: |
+        cargo build --release --bin resvg-cli
+
+    - name: Prepare Artifact Workspace
+      shell: bash
+      run: |
+        # Create a clean folder to package the artifact
+        mkdir -p dist/
+        cp target/release/*.exe dist/
+
+    - name: Generate Datestamp
+      id: date
+      shell: bash
+      run: |
+        # Generates a stamp like YYYYMMDD
+        echo "stamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        # Formats output as: resvg-windows-20260909-b42
+        name: resvg-windows-${{ steps.date.outputs.stamp }}-b${{ github.run_number }}
+        path: dist
+        if-no-files-found: error
+        retention-days: 14
